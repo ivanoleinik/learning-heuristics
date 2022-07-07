@@ -67,5 +67,28 @@ To create a train dataset run `prepare_dataset.py` script. In this script you sh
 
 To train a model you can run `learning heuristics.ipynb` notebook. There you should specify the paths to the train dataset (inputs and targets) and the path to the directory where the model parameters should be saved. You can find the train dataset obtained by running `prepare_dataset.py` on the original data from `data.zip` in `train data` directory in the same place. You can also change the size of the maps of the dataset in the notebook if needed.
 
+## Cases
+
+### Case 0: Reproduce the result.
+
+* Download `data.zip` and `model` directory from [here](https://drive.google.com/drive/folders/1EqTBn5k79eaj0DH5fPFeejEeCwsOSg0i?usp=sharing).
+* Take `train data` folder from the archive and put it with `model` directory and `learning heuristics.ipynb` in the same directory.
+* Run `learning heuristics.ipynb`.
+* To reproduce train data run `prepare_dataset.py` on `train maps` from `data.zip`.
+
+### Case 1: Predict heuritics on other maps with goals using the pretrained model.
+
+* The model takes as an input a pytorch tensor of size (N, 2, 64, 64), where N is the size of the test data. An element of the test data is a tensor of size (2, 64, 64) which is a concatenation of two tensors: the map tensor and the goal pose tensor in exactly that order. Both of them have size (1, 64, 64). Obstacles in the map tensor are marked with 0 and free cells are marked with 1. The goal pose tensor contains only one non-zero element - a 1 at the goal cell position.
+* How to get model predictions on the test data one can find at `Load a trained model` section in `learning heuristics.ipynb`.
+* The predictions is a pytorch tensor of the size (N, 1, 64, 64) and contain the values of predicted heuristics for each element of the test data.
+* Before testing the predicted heuristics with a path planner you should slightly modify the code of `run_a_test` function -- remove an outer cycle from it.
+
+### Case 2: Create your own dataset and train a model on it.
+
+* If the size of your maps is distinct from 64 times 64 or the pretrained model is inapplicable to your data, follow these instructions.
+* First of all, you need to create your own dataset. For this purpose you can use `prepare_dataset.py` script (see `Create a dataset` in `How to` section of this README). Change `SIZE` and other parameters in the code of the script if needed. As a base for the dataset you can use maps from `train maps` from `data.zip` as well as your own maps in .map format.
+* The next step is to train the model on the created dataset. For this purpose you can use `learning heuristics.ipynb` notebook (see `Train a model` in `How to`). Do not forget to change the paths to train data and `SIZE` parameter in the notebook. Uncomment one of the cells in the `Model` section of the notebook and comment the cell in `Load a trained model` section.
+* Run the notebook.
+
 ## References
 <b id="f1">1</b> Takahashi, T.; Sun, H.; Tian, D.; Wang, Y. Learning Heuristic Functions for Mobile Robot Path Planning Using Deep Neural Networks. _ICAPS_ **2019**, _29_, 764-772. [](#a1)
