@@ -1,3 +1,10 @@
+"""
+This scripts generates a train dataset of given size from several maps in .map format.
+The generated dataset consist of three parts: features, target values for 4-connected maps,
+and target values for 8-connected maps. All the maps of the dataset are squared maps.
+All the files of the dataset are saved as pytorch tensors.
+"""
+
 import os
 import cv2
 import math
@@ -6,16 +13,22 @@ import torch
 import numpy as np
 
 
-DATA = 'data/train maps'
-TRAIN = 'data/train data/inputs'
-TARGET4 = 'data/train data/target4'
-TARGET8 = 'data/train data/target8'
+DATA = 'data/train_maps'             # The path to the directory with .map files
+TRAIN = 'data/train_data/inputs'     # The output path to the directory with features
+TARGET4 = 'data/train_data/target4'  # The output path to the directory with target values for 4-connected maps
+TARGET8 = 'data/train_data/target8'  # The output path to the directory with target values for 8-connected maps
 
-SIZE = 64
-SEED = 1337
+SIZE = 64                            # The size of the side of a map from the dataset. Must be a multiple of 4.
+DATASET_SIZE = 50000                 # The number of maps in the dataset.
+
+SEED = 1337                          # The seed from which the generation process starts.
+LOWER_BOUND, UPPER_BOUND = 0.1, 0.9  # The amount of reachable cells from the goal in a valid map must lie between LOWER_BOUND * AREA and UPPER_BOUND * AREA, where AREA is an area of a map of the dataset. The map is considered as a 4-connected map.
+P = 2 / 3                            # The probability of a big tile being replaced by four small tiles.
+MAX_ITER = SIZE // 4                 # After a map was generated a random cell is selected as a goal. If for MAX_ITER iterations only unavailable cells were selected in a map, the program generates the next map.
 
 
 def map2numpy(file):
+    """Converts a file from DATA directory from .map format to a 2D-array"""
     fin = open(os.path.join(DATA, file))
     lines = fin.readlines()
     info, data = lines[:4], lines[4:]
@@ -49,7 +62,7 @@ def get_map_tiles(tile_size):
 
 def is_valid_map(arr, x_goal, y_goal):
     area = SIZE * SIZE
-    return 0.1 * area < np.count_nonzero(np.array(bfs(arr, x_goal, y_goal)) == -1) < 0.9 * area
+    return LOWER_BOUND * area < np.count_nonzero(np.array(bfs(arr, x_goal, y_goal)) == -1) < UPPER_BOUND * area
 
 
 def get_input_tensor(arr, x_goal, y_goal):
@@ -105,7 +118,7 @@ def dijkstra(arr, x_goal, y_goal):
     return dist
 
 
-def gen_data(dataset_size=50000, p=2/3, max_iter=SIZE // 4):
+def gen_data(dataset_size=DATASET_SIZE, p=P, max_iter=MAX_ITER):
     small_sz, big_sz = SIZE // 4, SIZE // 2
     small_tiles = get_map_tiles(small_sz)
     big_tiles = get_map_tiles(big_sz)
@@ -138,4 +151,4 @@ def gen_data(dataset_size=50000, p=2/3, max_iter=SIZE // 4):
 
 if __name__ == '__main__':
     np.random.seed(SEED)
-    gen_data(dataset_size=50000)
+    gen_data()
